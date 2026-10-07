@@ -1,0 +1,4 @@
+{
+  "version": 1,
+  "patterns": ["node_modules", ".git", "bin", "obj", "dist", "build", "__pycache__", ".venv", "target", ".idea", ".vs"]
+}

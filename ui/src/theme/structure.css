@@ -1,0 +1,46 @@
+/* Structural layout only: grid areas, overflow, min-widths, scroll, panes.
+   No colors, fonts, shadows, radii, transitions. */
+.shell {
+  display: grid;
+  grid-template-areas: "header header" "nav main";
+  grid-template-columns: minmax(12rem, 16rem) 1fr;
+  min-height: 100vh;
+}
+.shell__header {
+  grid-area: header;
+  overflow: auto;
+  min-width: 0;
+}
+.shell__nav {
+  grid-area: nav;
+  overflow: auto;
+  min-width: 12rem;
+}
+.shell__main {
+  grid-area: main;
+  overflow: auto;
+  min-width: 0;
+}
+.shell__list {
+  display: block;
+  overflow: auto;
+}
+.browser__panes {
+  display: grid;
+  grid-template-columns: minmax(12rem, 20rem) 1fr;
+}
+.tree,
+.browser__list,
+.inbox__list,
+.repos__list {
+  overflow: auto;
+  min-width: 0;
+}
+.editor__cm {
+  overflow: auto;
+  min-width: 0;
+  min-height: 12rem;
+}
+table.browser__table {
+  width: 100%;
+}

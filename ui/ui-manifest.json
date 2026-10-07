@@ -1,0 +1,8 @@
+{
+  "name": "inkguide-reference-ui",
+  "version": "0.1.0",
+  "contract": "1.0",
+  "entry": "index.html",
+  "minHostVersion": "0.1.0",
+  "features": []
+}

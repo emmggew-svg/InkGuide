@@ -1,0 +1,5 @@
+PLACEHOLDER — do not commit branding here.
+
+Drop the owner-supplied application icon at assets/app.ico (ICO format).
+InkGuide.App picks it up automatically when present (see InkGuide.App.csproj);
+otherwise the SDK default icon is used. No logo or artwork is created by the build.

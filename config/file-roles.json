@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "rulesetVersion": "1.0.0",
+  "roles": [
+    { "id": "readme", "patterns": ["README*", "readme*"], "priority": 100, "summaryTemplate": "Project readme: {title}. {lines} lines." },
+    { "id": "license", "patterns": ["LICENSE*", "LICENCE*"], "priority": 100, "summaryTemplate": "License file." },
+    { "id": "package-manifest", "patterns": ["package.json", "*.csproj", "pyproject.toml", "Cargo.toml", "go.mod"], "priority": 90, "summaryTemplate": "Package manifest for {project}." },
+    { "id": "entry-point", "patterns": ["index.html", "main.*", "app.*", "Program.cs"], "priority": 50, "summaryTemplate": "Likely entry point: {name}." },
+    { "id": "env-config", "patterns": [".env*", "*.pem", "*.key", "*.pfx", "credentials*.json", "client_secret*.json"], "priority": 95, "sensitive": true, "summaryTemplate": "Sensitive configuration — excluded from indexing and AI." },
+    { "id": "build-output", "patterns": ["bin/*", "obj/*", "dist/*", "build/*"], "priority": 10, "generated": true, "summaryTemplate": "Generated build output." }
+  ]
+}

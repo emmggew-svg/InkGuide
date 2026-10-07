@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- Console tool. OS-version qualifier mirrors InkGuide.App: the repo-wide
+         SupportedOSPlatformVersion requires it (see App csproj comment). -->
+    <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
+    <AssemblyName>InkGuide.Tools</AssemblyName>
+    <RootNamespace>InkGuide.Tools</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\InkGuide.Bridge\InkGuide.Bridge.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="tr-TR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Strict CSP for the bundled reference UI (offline, no CDN, relative base).
+      script-src 'self': no inline/eval scripts.
+      style-src 'self' 'unsafe-inline': EXCEPTION documented — CodeMirror 6
+        injects dynamic styles at runtime via JS; no author inline styles are
+        used (see no-design lint). Recorded per MASTER_PROMPT Sec 16.5.
+      connect-src 'none': reference UI talks to the host only via WebView2
+        postMessage, never fetch/XHR. object-src/base-uri/form-action locked.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'self'"
+    />
+    <title>InkGuide</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

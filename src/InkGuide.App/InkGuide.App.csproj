@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- OS-version qualifier required: bare net9.0-windows defaults the
+         target platform to 7.0, which conflicts with the repo-wide
+         SupportedOSPlatformVersion 10.0.17763.0 (see docs/DECISIONS.md). -->
+    <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
+    <IsWpfProject>true</IsWpfProject>
+    <!-- Set UseWPF directly: Directory.Build.props cannot observe IsWpfProject
+         (it is imported before the project body defines it). -->
+    <UseWPF>true</UseWPF>
+    <!-- Required by LibraryImport source generation for Win32 activation (see DECISIONS.md). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Owner-supplied icon wins when present; otherwise the SDK default icon is used. No branding is created here. -->
+    <ApplicationIcon Condition="Exists('..\..\assets\app.ico')">..\..\assets\app.ico</ApplicationIcon>
+    <AssemblyName>InkGuide</AssemblyName>
+    <RootNamespace>InkGuide.App</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\InkGuide.Bridge\InkGuide.Bridge.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://inkguide.local/schemas/project-markers.schema.json",
+  "version": 1,
+  "projects": [
+    { "id": "web-static", "name": "Static website", "tags": ["type:web-site", "tech:html", "tech:css"], "markers": [{ "path-glob": "index.html" }, { "path-glob": "*.css" }], "weight": 10, "excludes": [] },
+    { "id": "web-nextjs", "name": "Next.js", "tags": ["type:web-site", "tech:nextjs", "tech:react"], "markers": [{ "path-glob": "next.config.*" }, { "path-glob": "package.json", "contains": "next" }], "weight": 20, "excludes": [] },
+    { "id": "web-nuxt", "name": "Nuxt", "tags": ["type:web-site", "tech:nuxt", "tech:vue"], "markers": [{ "path-glob": "nuxt.config.*" }], "weight": 20, "excludes": [] },
+    { "id": "web-astro", "name": "Astro", "tags": ["type:web-site", "tech:astro"], "markers": [{ "path-glob": "astro.config.*" }], "weight": 20, "excludes": [] },
+    { "id": "web-spa-vite", "name": "Vite SPA", "tags": ["type:web-site", "tech:vite"], "markers": [{ "path-glob": "vite.config.*" }, { "path-glob": "index.html" }], "weight": 18, "excludes": [] },
+    { "id": "web-angular", "name": "Angular", "tags": ["type:web-site", "tech:angular"], "markers": [{ "path-glob": "angular.json" }], "weight": 20, "excludes": [] },
+    { "id": "web-wordpress", "name": "WordPress", "tags": ["type:web-site", "tech:wordpress", "tech:php"], "markers": [{ "path-glob": "wp-config.php" }, { "path-glob": "wp-content/*" }], "weight": 20, "excludes": [] },
+    { "id": "dotnet-solution", "name": ".NET solution", "tags": ["type:dotnet", "tech:csharp"], "markers": [{ "path-glob": "*.sln" }, { "path-glob": "*.csproj" }], "weight": 20, "excludes": ["bin/*", "obj/*"] },
+    { "id": "node-package", "name": "Node package", "tags": ["type:node-package", "tech:nodejs"], "markers": [{ "path-glob": "package.json" }], "weight": 10, "excludes": ["node_modules/*"] },
+    { "id": "python-project", "name": "Python", "tags": ["type:python", "tech:python"], "markers": [{ "path-glob": "pyproject.toml" }, { "path-glob": "requirements.txt" }, { "path-glob": "setup.py" }], "weight": 15, "excludes": [] },
+    { "id": "minecraft-plugin", "name": "Minecraft plugin", "tags": ["type:minecraft-plugin", "tech:java"], "markers": [{ "path-glob": "plugin.yml" }, { "path-glob": "paper-plugin.yml" }, { "path-glob": "velocity-plugin.json" }], "weight": 20, "excludes": [] },
+    { "id": "minecraft-mod", "name": "Minecraft mod", "tags": ["type:minecraft-mod"], "markers": [{ "path-glob": "fabric.mod.json" }, { "path-glob": "META-INF/mods.toml" }], "weight": 20, "excludes": [] },
+    { "id": "unity", "name": "Unity", "tags": ["type:game", "tech:unity"], "markers": [{ "path-glob": "ProjectSettings/ProjectVersion.txt" }, { "path-glob": "Assets/*" }], "weight": 20, "excludes": [] },
+    { "id": "godot", "name": "Godot", "tags": ["type:game", "tech:godot"], "markers": [{ "path-glob": "project.godot" }], "weight": 20, "excludes": [] }
+  ],
+  "monoRoots": [
+    { "id": "monorepo", "markers": ["pnpm-workspace.yaml", "nx.json", "turbo.json", "lerna.json", "go.work"] }
+  ]
+}

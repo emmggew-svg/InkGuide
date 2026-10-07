@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\InkGuide.Domain\InkGuide.Domain.csproj" />
+    <ProjectReference Include="..\..\src\InkGuide.Application\InkGuide.Application.csproj" />
+    <ProjectReference Include="..\..\src\InkGuide.Analysis\InkGuide.Analysis.csproj" />
+    <ProjectReference Include="..\..\src\InkGuide.Infrastructure.Persistence\InkGuide.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\InkGuide.Infrastructure.Storage\InkGuide.Infrastructure.Storage.csproj" />
+    <ProjectReference Include="..\..\src\InkGuide.Infrastructure.Platform\InkGuide.Infrastructure.Platform.csproj" />
+    <ProjectReference Include="..\..\src\InkGuide.Bridge\InkGuide.Bridge.csproj" />
+    <ProjectReference Include="..\..\src\InkGuide.App\InkGuide.App.csproj" />
+    <ProjectReference Include="..\..\src\InkGuide.Tools\InkGuide.Tools.csproj" />
+  </ItemGroup>
+
+</Project>

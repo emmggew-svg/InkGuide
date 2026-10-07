@@ -1,0 +1,46 @@
+{
+  "name": "inkguide-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "InkGuide reference UI (wireframe-grade, replaceable). PLACEHOLDER styling only.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "contract:check": "node ./scripts/contract-check.mjs"
+  },
+  "dependencies": {
+    "@codemirror/lang-javascript": "6.2.5",
+    "@codemirror/language": "6.12.1",
+    "@codemirror/state": "6.5.2",
+    "@codemirror/view": "6.38.1",
+    "codemirror": "6.0.1",
+    "dompurify": "^3.4.16",
+    "marked": "^18.1.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "zustand": "5.0.8"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.8.0",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "14.6.1",
+    "@types/node": "^26.6.4",
+    "@types/react": "19.1.13",
+    "@types/react-dom": "19.1.9",
+    "@vitejs/plugin-react": "4.7.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "9.34.0",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "jsdom": "26.1.0",
+    "typescript": "5.9.2",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^7.3.7",
+    "vitest": "^4.1.11"
+  }
+}

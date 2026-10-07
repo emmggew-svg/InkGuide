@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "map": {
+    ".cs": "source-code", ".ts": "source-code", ".tsx": "source-code", ".js": "client-script",
+    ".html": "web-page", ".css": "stylesheet", ".json": "data-structured",
+    ".md": "document-text", ".pdf": "pdf", ".png": "image-raster", ".jpg": "image-raster",
+    ".svg": "image-vector", ".zip": "archive", ".exe": "executable", ".mp3": "audio", ".mp4": "video"
+  },
+  "mimeFallback": {
+    "application/vnd.google-apps.document": "google-doc",
+    "application/vnd.google-apps.spreadsheet": "google-sheet",
+    "application/vnd.google-apps.presentation": "google-slides"
+  }
+}

@@ -1,0 +1,42 @@
+/* PLACEHOLDER — replaced by the owner's designer.
+   Every visual value in the reference UI is a CSS custom property with a
+   neutral placeholder (system-ui, grayscale, 1px borders). No design intent. */
+:root {
+  --inkguide-font-family: system-ui;
+  --inkguide-font-size: 100%;
+  --inkguide-fg: #000;
+  --inkguide-bg: #fff;
+  --inkguide-border-color: #888;
+  --inkguide-border-width: 1px;
+  --inkguide-pane-bg: #fff;
+  --inkguide-muted-fg: #555;
+  --inkguide-focus-outline: 1px solid #000;
+  --inkguide-radius: 0;
+  --inkguide-gap: 0;
+}
+
+body {
+  font-family: var(--inkguide-font-family);
+  color: var(--inkguide-fg);
+  background: var(--inkguide-bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--inkguide-font-family);
+  border: var(--inkguide-border-width) solid var(--inkguide-border-color);
+}
+
+:focus-visible {
+  outline: var(--inkguide-focus-outline);
+}
+
+/* CodeMirror inherits tokens only (functional editor, no design). */
+.editor__cm .cm-editor {
+  font-family: var(--inkguide-font-family);
+  color: var(--inkguide-fg);
+  background: var(--inkguide-pane-bg);
+  border: var(--inkguide-border-width) solid var(--inkguide-border-color);
+}
