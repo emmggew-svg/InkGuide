@@ -11,9 +11,11 @@
   adapts them to real services. Full e2e against real Application services is
   pending host wiring.
 - L-02 — Reference UI ships in `ui/` (18 wireframe views, core/stores/i18n,
-  fixture bridge, ui-override + `--ui-dev-url` ready). `vite build` hangs at
-  the transforming stage on this machine (bg job, investigation ongoing);
-  `typecheck` + `lint` + `vitest 67/67` + `contract:check` are green.
+  fixture bridge, ui-override + `--ui-dev-url` ready). UI gate is green:
+  `typecheck` + `eslint --max-warnings 0` + `vitest 67/67` + `vite build`
+  (~666 ms, dist/ emitted) + `contract:check` + prod-bundle fixture-leak scan.
+  (Was blocked by a Vite 7.3.7 transform hang on React 19/Node 24 — see D-017;
+  upgraded to Vite 8.3.3 + plugin-react 5.2.0.)
 - L-03 — `live-check --local-provider` passes 7/7 on a dedicated timestamped
   folder with guaranteed cleanup. Without `--local-provider` it honestly
   reports Drive-backend state (exit 2) instead of faking success.

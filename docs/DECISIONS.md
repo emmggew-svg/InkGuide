@@ -83,3 +83,8 @@
 - Context: (1) Debug test proved index.json persisted (len=346, folder present) yet ListChildren(RootId) returned 0 — System.Text.Json does not populate get-only `Dictionary.Items`; (2) EF Core SQLite throws InvalidOperationException/NotSupportedException for `DateTimeOffset <=` in Where and ORDER BY DateTimeOffset.
 - Decision: Add public setters to `Index.Items` / `IndexEntry.AppProperties`; filter/sort outbox/journal/snapshot/conflict DateTimeOffset queries in memory after a narrow server filter (outbox sets capped at 500).
 - Consequence: 12/12 integration tests green; no schema change.
+
+## D-017 — Vite 7.3.7 -> 8.3.3, plugin-react 4.7.0 -> 5.2.0 (build hang)
+- Context: `vite build` hung forever at "transforming..." (multiple 2-5 min timeouts, one node process at 385 CPU-s). Bisected with evidence: vanilla Vite project builds in 260 ms; react-only entry (plain .js, no aliases, no react plugin via diagnostic config) still hangs; isolated TEMP project (no config, react+react-dom) still hangs; same isolated project builds in 597 ms under Vite 8.3.3. Culprit: Vite 7.3.7's Rollup 4.x pipeline on React 19.1 dist under Node 24 (Vite 8 uses Rolldown and is unaffected). The @vitejs/plugin-react was exonerated (hang reproduces without it).
+- Decision: `vite@8.3.3` + `@vitejs/plugin-react@5.2.0` (supports vite ^8, same Babel pipeline as 4.x — conservative vs 6.x oxc line). Full app `npm run build` now completes in ~666 ms (62 modules, dist/ with index.html + css + js).
+- Consequence: UI gate fully green (typecheck, eslint 0 warnings, vitest 67/67, contract:check, prod bundle has no fixture strings). `package-lock.json` updated.
