@@ -32,3 +32,8 @@ desktop.ini
 
 # Publish
 publish/
+
+# Test coverage output
+ui/coverage/
+TestResults/
+
