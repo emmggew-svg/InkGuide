@@ -34,8 +34,10 @@
 
   <!-- Dev convenience: `dotnet run` shows the reference UI without a full
        publish. Copies ui/dist next to the exe only when it exists, so clean
-       checkouts without a UI build still compile. Publish uses build\publish.cmd. -->
-  <Target Name="CopyUiBundleForDev" AfterTargets="Build" Condition="Exists('..\..\ui\dist\index.html')">
+       checkouts without a UI build still compile. Skipped during publish:
+       build\publish.cmd assembles ui\dist itself, and extra in-target copies
+       disturb the publish file-resolution pipeline (MSB3094). -->
+  <Target Name="CopyUiBundleForDev" AfterTargets="Build" Condition="Exists('..\..\ui\dist\index.html') And '$(PublishDir)' == ''">
     <ItemGroup>
       <UiBundleFiles Include="..\..\ui\dist\**\*" />
     </ItemGroup>
