@@ -32,4 +32,14 @@
     <ProjectReference Include="..\InkGuide.Bridge\InkGuide.Bridge.csproj" />
   </ItemGroup>
 
+  <!-- Dev convenience: `dotnet run` shows the reference UI without a full
+       publish. Copies ui/dist next to the exe only when it exists, so clean
+       checkouts without a UI build still compile. Publish uses build\publish.cmd. -->
+  <Target Name="CopyUiBundleForDev" AfterTargets="Build" Condition="Exists('..\..\ui\dist\index.html')">
+    <ItemGroup>
+      <UiBundleFiles Include="..\..\ui\dist\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(UiBundleFiles)" DestinationFiles="@(UiBundleFiles->'$(OutDir)ui\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

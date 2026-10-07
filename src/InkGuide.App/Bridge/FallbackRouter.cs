@@ -53,7 +53,7 @@ internal sealed partial class FallbackRouter : IBridgeRequestRouter
         {
             return method switch
             {
-                "app.hello" => Task.FromResult(Ok(new
+                "app.hello" => Task.FromResult(Ok(Handshake(new
                 {
                     contract = new { major = AppIdentity.BridgeContractMajor, minor = AppIdentity.BridgeContractMinor },
                     hostVersion = host.HostVersion,
@@ -61,7 +61,7 @@ internal sealed partial class FallbackRouter : IBridgeRequestRouter
                     features = new { localProvider = host.CliOptions.LocalProviderDir is not null },
                     settingsSnapshot = new { },
                     uiStatus = UiStatus(host),
-                })),
+                }))),
                 "app.getInfo" => Task.FromResult(Ok(new
                 {
                     name = AppIdentity.AppName,
@@ -101,6 +101,12 @@ internal sealed partial class FallbackRouter : IBridgeRequestRouter
     private static BridgeOutcome Ok(object value)
     {
         return BridgeOutcome.Ok(JsonSerializer.Serialize(value, BridgeEnvelope.Options));
+    }
+
+    private BridgeOutcome Handshake(object value)
+    {
+        AppLogMessages.HandshakeServed(_logger, AppIdentity.BridgeContractMajor, AppIdentity.BridgeContractMinor);
+        return Ok(value);
     }
 
     private Task<BridgeOutcome> OpenLogsFolder(HostServices host)

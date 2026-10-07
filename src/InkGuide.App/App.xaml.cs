@@ -80,6 +80,7 @@ public partial class App : System.Windows.Application
             builder.Logging.AddSerilog(Log.Logger);
             builder.Services.AddSingleton(cli);
             builder.Services.AddSingleton(paths);
+            builder.Services.AddSingleton(TimeProvider.System);
             builder.Services.AddSingleton(singleInstance);
             builder.Services.AddSingleton<WindowStateStore>();
             builder.Services.AddSingleton<UiOverride>();

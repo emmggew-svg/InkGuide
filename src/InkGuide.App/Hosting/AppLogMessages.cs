@@ -111,6 +111,9 @@ internal static partial class AppLogMessages
     [LoggerMessage(EventId = 184, Level = LogLevel.Information, Message = "UI: {Message}")]
     public static partial void UiLogInfo(ILogger logger, string message);
 
+    [LoggerMessage(EventId = 185, Level = LogLevel.Information, Message = "Bridge handshake served (contract {Major}.{Minor}).")]
+    public static partial void HandshakeServed(ILogger logger, int major, int minor);
+
     // BridgeTransport (190-209)
     [LoggerMessage(EventId = 190, Level = LogLevel.Warning, Message = "Rejected bridge message from unexpected origin.")]
     public static partial void BadOrigin(ILogger logger);

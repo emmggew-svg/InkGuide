@@ -42,32 +42,53 @@ internal static class BridgeEnvelope
         {
             using JsonDocument doc = JsonDocument.Parse(json);
             JsonElement root = doc.RootElement;
-            if (root.ValueKind != JsonValueKind.Object)
+            // The UI posts a JSON string via postMessage(jsonString) (Sec 14.2),
+            // which WebView2 delivers as a JSON string literal — unwrap one level.
+            // A directly-posted object is accepted as well.
+            if (root.ValueKind == JsonValueKind.String)
             {
-                return false;
+                string? inner = root.GetString();
+                if (string.IsNullOrEmpty(inner))
+                {
+                    return false;
+                }
+
+                using JsonDocument innerDoc = JsonDocument.Parse(inner);
+                return TryParseElement(innerDoc.RootElement, out request);
             }
 
-            string type = GetString(root, "type") ?? string.Empty;
-            string id = GetString(root, "id") ?? string.Empty;
-            if (id.Length == 0 || (type != "req" && type != "cancel"))
-            {
-                return false;
-            }
-
-            string method = GetString(root, "method") ?? string.Empty;
-            string paramsJson = "{}";
-            if (root.TryGetProperty("params", out JsonElement p) || root.TryGetProperty("Params", out p))
-            {
-                paramsJson = p.GetRawText();
-            }
-
-            request = new BridgeRequest(id, type, method, paramsJson);
-            return true;
+            return TryParseElement(root, out request);
         }
         catch (JsonException)
         {
             return false;
         }
+    }
+
+    private static bool TryParseElement(JsonElement root, out BridgeRequest? request)
+    {
+        request = null;
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        string type = GetString(root, "type") ?? string.Empty;
+        string id = GetString(root, "id") ?? string.Empty;
+        if (id.Length == 0 || (type != "req" && type != "cancel"))
+        {
+            return false;
+        }
+
+        string method = GetString(root, "method") ?? string.Empty;
+        string paramsJson = "{}";
+        if (root.TryGetProperty("params", out JsonElement p) || root.TryGetProperty("Params", out p))
+        {
+            paramsJson = p.GetRawText();
+        }
+
+        request = new BridgeRequest(id, type, method, paramsJson);
+        return true;
     }
 
     private static string? GetString(JsonElement root, string camelName)

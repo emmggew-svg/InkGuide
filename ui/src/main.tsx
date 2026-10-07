@@ -7,8 +7,16 @@ import { fixtureInvoke } from "@core/fixtureBridge";
 import "./theme/tokens.css";
 import "./theme/structure.css";
 
-function webviewTransport(): Transport | null {
-  const w = window as unknown as {
+function isEnvelope(v: unknown): v is BridgeEnvelope {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as { id: unknown }).id === "string" &&
+    typeof (v as { type: unknown }).type === "string"
+  );
+}
+
+function webviewTransport(): Transport | null {  const w = window as unknown as {
     chrome?: { webview?: { postMessage: (m: string) => void; addEventListener: (e: string, cb: (ev: { data: string }) => void) => void } };
   };
   if (!w.chrome?.webview) {
@@ -17,9 +25,15 @@ function webviewTransport(): Transport | null {
   const listeners = new Set<(m: BridgeEnvelope) => void>();
   w.chrome.webview.addEventListener("message", (ev) => {
     try {
-      const msg = JSON.parse(ev.data) as BridgeEnvelope;
+      // PostWebMessageAsJson delivers the parsed object; a plain
+      // postMessage(string) would arrive as text. Accept both shapes.
+      const raw = (ev as unknown as { data: unknown }).data;
+      const parsed: unknown = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (!isEnvelope(parsed)) {
+        return;
+      }
       for (const l of listeners) {
-        l(msg);
+        l(parsed);
       }
     } catch {
       // ignore malformed host messages
