@@ -39,5 +39,37 @@ is MIT.
 
 ## npm (ui/)
 
-No UI dependencies installed yet (`ui/package.json` not present). This section
-is filled in by the UI workstream when the toolchain lands.
+> Refreshed 2026-10-08 for the Vite 8 upgrade (see docs/DECISIONS.md D-017).
+> Licenses read from each installed package's `package.json` (`license` field).
+
+| Package | Version (installed) | License |
+|---|---|---|
+| react | 19.1.1 | MIT |
+| react-dom | 19.1.1 | MIT |
+| zustand | 5.0.8 | MIT |
+| codemirror | 6.0.1 | MIT |
+| @codemirror/state | 6.5.2 | MIT |
+| @codemirror/view | 6.38.1 | MIT |
+| @codemirror/language | 6.12.1 | MIT |
+| @codemirror/lang-javascript | 6.2.5 | MIT |
+| marked | 18.1.0 | MIT |
+| dompurify | 3.4.16 | Apache-2.0 (dual licensed MPL-2.0 OR Apache-2.0; Apache-2.0 terms apply) |
+| vite | 8.3.3 | MIT |
+| @vitejs/plugin-react | 5.2.0 | MIT |
+| typescript | 5.9.2 | Apache-2.0 |
+| typescript-eslint | 8.71.1 | MIT |
+| eslint | 9.34.0 | MIT |
+| eslint-plugin-jsx-a11y | 6.10.2 | MIT |
+| eslint-plugin-react-hooks | 5.2.0 | MIT |
+| vitest | 4.1.11 | MIT |
+| @vitest/coverage-v8 | 4.1.11 | MIT |
+| jsdom | 26.1.0 | MIT |
+| @testing-library/react | 16.3.0 | MIT |
+| @testing-library/jest-dom | 6.8.0 | MIT |
+| @testing-library/user-event | 14.6.1 | MIT |
+| @types/react | 19.1.13 | MIT |
+| @types/react-dom | 19.1.9 | MIT |
+| @types/node | 26.6.4 | MIT |
+
+No UI kits, CSS frameworks, icon packs, web fonts, animation libraries, or CDN
+assets are used (MASTER_PROMPT R-25). No GPL/AGPL/SSPL packages.
