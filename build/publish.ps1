@@ -4,10 +4,12 @@ $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) -Parent)
 
 $Out = "dist/InkGuide-$Version-win-x64"
-$Tmp = 'publish/tmp'
+# Stage outside the repo: MSBuild publish file-resolution (MSB3094) breaks when
+# the repo path contains characters like apostrophes (see DECISIONS D-019).
+$Tmp = Join-Path $env:TEMP "inkguide-publish-$Version"
 
 if (Test-Path dist) { Remove-Item -Recurse -Force dist }
-if (Test-Path publish) { Remove-Item -Recurse -Force publish }
+if (Test-Path $Tmp) { Remove-Item -Recurse -Force $Tmp }
 New-Item -ItemType Directory $Out | Out-Null
 
 if (Test-Path 'ui/package.json') {

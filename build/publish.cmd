@@ -9,11 +9,14 @@ cd /d "%~dp0.."
 set VERSION=%~1
 if "%VERSION%"=="" set VERSION=0.1.0
 set OUT=dist\InkGuide-%VERSION%-win-x64
-set TMP=publish\tmp
+rem Stage outside the repo: MSBuild publish file-resolution (MSB3094) breaks
+rem when the repo path contains characters like apostrophes (see DECISIONS
+rem D-019). %TEMP% staging keeps publish working from any checkout location.
+set TMP=%TEMP%\inkguide-publish-%VERSION%
 
 echo Cleaning...
 if exist dist rmdir /s /q dist
-if exist publish rmdir /s /q publish
+if exist "%TMP%" rmdir /s /q "%TMP%"
 mkdir "%OUT%"
 
 if exist ui\package.json (

@@ -52,12 +52,13 @@
 - [x] WebView2 hardening implemented and tested (origin check, navigation allowlist, permissions, downloads) — code + launch log (runtime 154.0.4258.62, hosts mapped, 0 blocked-nav errors in smoke)
 - [x] i18n complete for tr-TR and en-US — missing/unused-key tests green
 - [x] Security checklist satisfied; audits clean or documented — verify audits clean; SQLitePCLRaw note in KNOWN_LIMITATIONS; redaction + sanitization tests green
-- [ ] build\publish.cmd produces a runnable distribution; installer script present; notices generated — installer/setup.iss present (not compiled, no Inno on machine); publish run in progress at time of writing
+- [x] build\publish.cmd produces a runnable distribution; installer script present; notices generated — PUBLISH OK 2026-10-08: dist/InkGuide-0.1.0-win-x64/ + 78 MB zip + SHA256SUMS; published exe smoke-tested (responding window, handshake 1.0, WebView2 154). installer/setup.iss present but NOT compiled (no Inno on machine). THIRD_PARTY_NOTICES.md regenerated with verified licenses.
 - [x] All documents in Section 22 exist and are accurate — 14 docs present (see Log 2026-10-08)
 - [x] Launch check performed — YES 2026-10-08: Debug + LocalFolder, window responding, handshake served, WebView2 154 detected (see Log)
 - [x] Local git history clean, nothing pushed — 5 commits, `git status` clean, no remotes touched
 
 ## Log
+- 2026-10-08: PUBLISH OK exit 0 — dist/InkGuide-0.1.0-win-x64/ (self-contained exe + WebView2Loader + ui/ + config/ + notices) + 78 MB zip + SHA256SUMS. Published-exe smoke test pass (responding window, handshake contract 1.0). Publish root cause was the apostrophe in the checkout path (MSB3094) — see DECISIONS D-019; publish now stages via %TEMP%.
 - 2026-10-08: VERIFY OK exit 0 (Release gate 8/8: restore, build 0 warn, tests 274+12+7, contract-gen fresh, UI npm-ci/typecheck/lint/test/build, fixture-leak clean, dotnet+npm audits clean, live-check 7/7).
 - 2026-10-08: LAUNCH CHECK pass (Debug + LocalFolder, fresh data dir): PID 15968 Responding=True window "InkGuide"; log shows WebView2 154.0.4258.62 detected, virtual hosts mapped to bundled ui/, "Bridge handshake served (contract 1.0)", zero malformed/rejections over 45 s+. Fixed from user-reported dialogs: ui-missing (dev UI copy target) + TimeProvider DI crash + bridge double-encoding (see DECISIONS D-018).
 - 2026-10-07: preflight ok, skeleton started. SDK 9 (not 8/10 LTS) — see DECISIONS D-001.
