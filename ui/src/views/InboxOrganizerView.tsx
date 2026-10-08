@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useOrganizerStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -8,6 +9,13 @@ export function InboxOrganizerView(): React.JSX.Element {
   const status = useOrganizerStore((s) => s.status);
   const errorCode = useOrganizerStore((s) => s.errorCode);
   const inbox = useOrganizerStore((s) => s.inbox);
+  const load = useOrganizerStore((s) => s.load);
+
+  useEffect(() => {
+    if (status === "idle") {
+      void load();
+    }
+  }, [status, load]);
 
   const suggest = (): void => {
     const c = getActiveClient();
@@ -26,6 +34,9 @@ export function InboxOrganizerView(): React.JSX.Element {
     <section className="inbox" aria-label={t("inbox.title")}>
       <h2>{t("inbox.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="inbox">
+        <button type="button" data-testid="inbox-refresh" data-action="inbox-refresh" onClick={() => { void load(); }}>
+          {t("common.refresh")}
+        </button>
         <ul className="inbox__list">
           {inbox.map((n) => (
             <li key={n.id} data-testid={`inbox-item-${n.id}`} data-action="inbox-item">

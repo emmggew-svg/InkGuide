@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using InkGuide.App.Hosting;
+using InkGuide.Bridge.Handlers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Web.WebView2.Core;
 
@@ -14,10 +15,11 @@ namespace InkGuide.App.Bridge;
 
 /// <summary>
 /// WebView2 message transport (MASTER_PROMPT Section 14.2): origin-checked,
-/// size-limited (1 MB) postMessage JSON in both directions. WebView2 calls run
-/// on the UI thread; request handling runs on background threads and supports
-/// cancellation via {type:"cancel"}. Host-to-UI events are coalesced per topic
-/// (minimum 100 ms between posts).
+/// size-limited (1 MB) postMessage JSON in both directions. Requests are
+/// dispatched through the versioned <see cref="BridgeDispatcher"/> (backed by
+/// the composed real backend); host-to-UI events are coalesced per topic
+/// (minimum 100 ms between posts). WebView2 calls run on the UI thread;
+/// request handling runs on background threads.
 /// </summary>
 internal sealed class BridgeTransport : IDisposable
 {
@@ -27,13 +29,11 @@ internal sealed class BridgeTransport : IDisposable
     private readonly TimeProvider _timeProvider;
     private readonly Dispatcher _dispatcher;
     private readonly DragDropHandler _dragDrop;
-    private readonly ConcurrentDictionary<string, CancellationTokenSource> _inflight = new(StringComparer.Ordinal);
     private readonly object _eventLock = new();
     private readonly Dictionary<string, EventEntry> _events = new(StringComparer.Ordinal);
 
     private CoreWebView2? _core;
-    private HostServices? _host;
-    private List<IBridgeRequestRouter> _routers = new();
+    private BridgeDispatcher? _bridge;
     private Uri? _devOrigin;
     private bool _disposed;
 
@@ -49,13 +49,11 @@ internal sealed class BridgeTransport : IDisposable
         _dragDrop = dragDrop;
     }
 
-    public void Configure(HostServices host, IEnumerable<IBridgeRequestRouter> routers, string? devUrl)
+    public void Configure(BridgeDispatcher dispatcher, string? devUrl)
     {
-        ArgumentNullException.ThrowIfNull(host);
-        ArgumentNullException.ThrowIfNull(routers);
-
-        _host = host;
-        _routers = routers.ToList();
+        ArgumentNullException.ThrowIfNull(dispatcher);
+        _bridge = dispatcher;
+        _devOrigin = null;
         if (!string.IsNullOrWhiteSpace(devUrl) && Uri.TryCreate(devUrl, UriKind.Absolute, out Uri? dev))
         {
             _devOrigin = new Uri(dev.GetLeftPart(UriPartial.Authority), UriKind.Absolute);
@@ -148,7 +146,8 @@ internal sealed class BridgeTransport : IDisposable
 
     private async void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
     {
-        if (_disposed || _host is null)
+        BridgeDispatcher? bridge = _bridge;
+        if (_disposed || bridge is null)
         {
             return;
         }
@@ -175,94 +174,30 @@ internal sealed class BridgeTransport : IDisposable
                 return;
             }
 
-            if (request.Type == "cancel")
-            {
-                Cancel(request.Id);
-                return;
-            }
-
-            string method = request.Method;
-            string paramsJson = request.ParamsJson;
-
+            string dispatchJson = json;
             string[] dropped = ExtractNativePaths(e);
             if (dropped.Length > 0)
             {
+                // Explorer drops carry native paths outside JS: route them as an
+                // upload into the Inbox (unsorted uploads land there by design).
                 DragDropResult validated = _dragDrop.Validate(dropped);
                 AppLogMessages.DropStats(_logger, validated.Accepted.Length, validated.Rejected.Length);
-                method = "transfers.uploadPaths";
-                paramsJson = "{\"paths\":" + System.Text.Json.JsonSerializer.Serialize(validated.Accepted, BridgeEnvelope.Options)
-                    + ",\"rejected\":" + System.Text.Json.JsonSerializer.Serialize(validated.Rejected, BridgeEnvelope.Options) + "}";
+                string pathsJson = System.Text.Json.JsonSerializer.Serialize(validated.Accepted, BridgeEnvelope.Options);
+                dispatchJson = "{\"v\":1,\"id\":" + System.Text.Json.JsonSerializer.Serialize(request.Id, BridgeEnvelope.Options)
+                    + ",\"type\":\"req\",\"method\":\"transfers.uploadPaths\",\"params\":{\"parentId\":\"\",\"localPaths\":" + pathsJson + "}}";
             }
 
-            await DispatchAsync(request.Id, method, paramsJson).ConfigureAwait(false);
+            // The dispatcher owns routing, cancellation, idempotency and replies;
+            // a null response means the message was a cancellation.
+            string? response = await bridge.DispatchAsync(dispatchJson, CancellationToken.None).ConfigureAwait(false);
+            if (response is not null)
+            {
+                await PostAsync(response).ConfigureAwait(false);
+            }
         }
         catch (Exception ex)
         {
             AppLogMessages.ReceiveFailed(_logger, ex);
-        }
-    }
-
-    private async Task DispatchAsync(string id, string method, string paramsJson)
-    {
-        var cts = new CancellationTokenSource();
-        _inflight[id] = cts;
-        HostServices host = _host!;
-
-        try
-        {
-            IBridgeRequestRouter? router = _routers.FirstOrDefault(r =>
-            {
-                try
-                {
-                    return r.CanHandle(method);
-                }
-                catch (Exception ex)
-                {
-                    AppLogMessages.RouterProbeFailed(_logger, ex);
-                    return false;
-                }
-            });
-
-            BridgeOutcome outcome = router is null
-                ? BridgeOutcome.Fail(BridgeError.NotFound(method))
-                : await Task.Run(() => router.RouteAsync(method, paramsJson, host, cts.Token), cts.Token).ConfigureAwait(false);
-
-            string reply = outcome.IsError || outcome.Error is not null
-                ? BridgeEnvelope.ErrorResponse(id, outcome.Error ?? BridgeError.Internal("Empty error."))
-                : BridgeEnvelope.Response(id, outcome.PayloadJson);
-            await PostAsync(reply).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            await PostAsync(BridgeEnvelope.ErrorResponse(id, BridgeError.Cancelled(id))).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            AppLogMessages.DispatchFailed(_logger, ex, method);
-            await PostAsync(BridgeEnvelope.ErrorResponse(id, BridgeError.Internal("Request handling failed."))).ConfigureAwait(false);
-        }
-        finally
-        {
-            _inflight.TryRemove(id, out _);
-            cts.Dispose();
-        }
-    }
-
-    private void Cancel(string id)
-    {
-        if (_inflight.TryRemove(id, out CancellationTokenSource? cts))
-        {
-            try
-            {
-                cts.Cancel();
-            }
-            catch (ObjectDisposedException)
-            {
-            }
-            finally
-            {
-                cts.Dispose();
-            }
         }
     }
 
@@ -352,20 +287,6 @@ internal sealed class BridgeTransport : IDisposable
 
         _disposed = true;
         Detach();
-        foreach (var pair in _inflight)
-        {
-            try
-            {
-                pair.Value.Cancel();
-            }
-            catch (Exception)
-            {
-            }
-
-            pair.Value.Dispose();
-        }
-
-        _inflight.Clear();
     }
 
     private sealed record EventEntry(DateTimeOffset LastSent, string? PendingJson, bool FlushScheduled);

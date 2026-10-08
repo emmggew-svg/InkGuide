@@ -225,4 +225,8 @@ internal static partial class AppLogMessages
 
     [LoggerMessage(EventId = 246, Level = LogLevel.Error, Message = "Unobserved background task exception.")]
     public static partial void BackgroundTaskFault(ILogger logger, Exception ex);
+
+    // Bridge backend (250-259): single template for backend notes to satisfy CA1848.
+    [LoggerMessage(EventId = 250, Level = LogLevel.Warning, Message = "Backend: {Message}")]
+    public static partial void BackendNote(ILogger logger, string message);
 }

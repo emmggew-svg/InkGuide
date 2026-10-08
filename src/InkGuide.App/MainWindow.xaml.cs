@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using InkGuide.App.Bridge;
+using InkGuide.App.Bridge.Backend;
 using InkGuide.App.Hosting;
 using InkGuide.App.WebView;
+using InkGuide.Bridge.Handlers;
 using Microsoft.Extensions.Logging;
 
 namespace InkGuide.App;
@@ -23,7 +24,8 @@ internal sealed partial class MainWindow : Window
     private readonly CliOptions _cli;
     private readonly UiResolution _ui;
     private readonly BridgeTransport _transport;
-    private readonly IReadOnlyList<IBridgeRequestRouter> _routers;
+    private readonly BridgeDispatcher _dispatcher;
+    private readonly BackendHost _backendHost;
     private readonly WindowStateStore _states;
     private readonly WebViewHostSetup _setup;
     private readonly Action _quit;
@@ -36,7 +38,8 @@ internal sealed partial class MainWindow : Window
         CliOptions cli,
         UiResolution ui,
         BridgeTransport transport,
-        IReadOnlyList<IBridgeRequestRouter> routers,
+        BridgeDispatcher dispatcher,
+        BackendHost backendHost,
         WindowStateStore states,
         WebViewHostSetup setup,
         Action quit,
@@ -47,7 +50,8 @@ internal sealed partial class MainWindow : Window
         _cli = cli;
         _ui = ui;
         _transport = transport;
-        _routers = routers;
+        _dispatcher = dispatcher;
+        _backendHost = backendHost;
         _states = states;
         _setup = setup;
         _quit = quit;
@@ -96,19 +100,18 @@ internal sealed partial class MainWindow : Window
 
         try
         {
-            HostServices host = new(
-                _paths,
-                _cli,
-                _ui,
-                Hosting.AppVersion.Current,
-                SetBackgroundAsync,
-                SetTitleAsync,
-                url => ExternalBrowser.Open(url, _logger),
-                _quit,
-                _restart,
-                (method, payload) => _transport.EmitEventAsync(method, payload));
+            _backendHost.UiSource = _ui.Source;
+            _backendHost.UiStatus = _ui.Status;
+            _backendHost.UiName = _ui.Name;
+            _backendHost.UiVersion = _ui.Version;
+            _backendHost.SetBackgroundAsync = SetBackgroundAsync;
+            _backendHost.SetTitleAsync = SetTitleAsync;
+            _backendHost.OpenExternalUrl = url => ExternalBrowser.Open(url, _logger);
+            _backendHost.Quit = _quit;
+            _backendHost.Restart = _restart;
+            _backendHost.EmitEventAsync = (method, payload) => _transport.EmitEventAsync(method, payload);
 
-            _transport.Configure(host, _routers, _cli.UiDevUrl);
+            _transport.Configure(_dispatcher, _cli.UiDevUrl);
 
             Microsoft.Web.WebView2.Core.CoreWebView2? core =
                 await _setup.InitializeAsync(Browser, _cli, _ui).ConfigureAwait(true);

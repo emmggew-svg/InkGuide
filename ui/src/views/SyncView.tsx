@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useConflictsStore, useSyncStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -12,6 +13,19 @@ export function SyncView(): React.JSX.Element {
   const cStatus = useConflictsStore((s) => s.status);
   const cError = useConflictsStore((s) => s.errorCode);
   const conflicts = useConflictsStore((s) => s.conflicts);
+  const loadSync = useSyncStore((s) => s.load);
+  const loadConflicts = useConflictsStore((s) => s.load);
+
+  useEffect(() => {
+    if (status === "idle") {
+      void loadSync();
+    }
+  }, [status, loadSync]);
+  useEffect(() => {
+    if (cStatus === "idle") {
+      void loadConflicts();
+    }
+  }, [cStatus, loadConflicts]);
 
   const act = (method: "sync.syncNow" | "sync.retryOutbox" | "sync.discardOutbox" | "sync.pause" | "sync.resume"): void => {
     const c = getActiveClient();
@@ -30,6 +44,17 @@ export function SyncView(): React.JSX.Element {
     <section className="sync" aria-label={t("sync.title")}>
       <h2>{t("sync.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="sync">
+        <button
+          type="button"
+          data-testid="sync-refresh"
+          data-action="sync-refresh"
+          onClick={() => {
+            void loadSync();
+            void loadConflicts();
+          }}
+        >
+          {t("common.refresh")}
+        </button>
         <p data-testid="sync-state" data-action="sync-state">
           {`${t("sync.status")}: ${syncState}`}
         </p>

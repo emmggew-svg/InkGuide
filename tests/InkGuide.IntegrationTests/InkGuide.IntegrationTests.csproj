@@ -5,10 +5,16 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- MSB3277: referencing the WPF-built App composition surfaces a benign
+         WindowsBase 4.0.0.0-vs-9.0.0.0 reference-assembly conflict (same file,
+         compile-time only; runtime uses the shared framework). Justified in
+         docs/DECISIONS.md (D-020). -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="coverlet.collector" />
@@ -24,6 +30,7 @@
     <ProjectReference Include="..\..\src\InkGuide.Infrastructure.Storage\InkGuide.Infrastructure.Storage.csproj" />
     <ProjectReference Include="..\..\src\InkGuide.Infrastructure.Platform\InkGuide.Infrastructure.Platform.csproj" />
     <ProjectReference Include="..\..\src\InkGuide.Bridge\InkGuide.Bridge.csproj" />
+    <ProjectReference Include="..\..\src\InkGuide.App\InkGuide.App.csproj" />
   </ItemGroup>
 
 </Project>

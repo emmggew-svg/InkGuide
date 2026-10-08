@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useDuplicatesStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -8,6 +9,13 @@ export function DuplicatesView(): React.JSX.Element {
   const status = useDuplicatesStore((s) => s.status);
   const errorCode = useDuplicatesStore((s) => s.errorCode);
   const groups = useDuplicatesStore((s) => s.groups);
+  const load = useDuplicatesStore((s) => s.load);
+
+  useEffect(() => {
+    if (status === "idle") {
+      void load();
+    }
+  }, [status, load]);
 
   const scan = (): void => {
     const c = getActiveClient();
@@ -20,6 +28,9 @@ export function DuplicatesView(): React.JSX.Element {
     <section className="duplicates" aria-label={t("duplicates.title")}>
       <h2>{t("duplicates.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="duplicates">
+        <button type="button" data-testid="duplicates-refresh" data-action="duplicates-refresh" onClick={() => { void load(); }}>
+          {t("common.refresh")}
+        </button>
         <button type="button" data-testid="duplicates-scan" data-action="duplicates-scan" onClick={scan}>
           {t("duplicates.scan")}
         </button>
@@ -35,8 +46,9 @@ export function DuplicatesView(): React.JSX.Element {
                 data-action="duplicates-resolve"
                 onClick={() => {
                   const c = getActiveClient();
-                  if (c) {
-                    void c.invoke("duplicates.resolve", { hash: g.hash });
+                  const [keep, ...rest] = g.nodeIds;
+                  if (c && keep !== undefined) {
+                    void c.invoke("duplicates.resolve", { keepNodeId: keep, trashNodeIds: rest });
                   }
                 }}
               >

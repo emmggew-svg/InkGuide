@@ -1,6 +1,37 @@
 import { create } from "zustand";
 import { getActiveClient } from "@core/bridge";
 import { isErrorCode } from "@core/contract";
+import {
+  mapAccount,
+  mapActivity,
+  mapConflict,
+  mapDuplicateGroup,
+  mapNode,
+  mapOutbox,
+  mapProject,
+  mapRepo,
+  mapRepoOverview,
+  mapSearchHit,
+  mapSnapshot,
+  mapTag,
+  mapTransfer,
+  toItems,
+} from "@core/mapping";
+import type {
+  AccountDto,
+  ActivityDto,
+  ConflictDto,
+  DuplicateGroupDto,
+  NodeDto,
+  OutboxDto,
+  ProjectDto,
+  RepoDto,
+  RepoOverviewDto,
+  SearchHitDto,
+  SnapshotDto,
+  TagDto,
+  TransferDto,
+} from "@core/contract";
 import type {
   AccountInfo,
   ActivityEntry,
@@ -120,13 +151,14 @@ export const useTreeStore = create<TreeState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: NodeItem[] }>("nodes.list", {
+      const res = await client.invoke<unknown>("nodes.list", {
         parentId,
         limit: 200,
       });
+      const nodes = toItems<NodeDto>(res).map(mapNode);
       set({
-        nodes: res.items,
-        status: res.items.length === 0 ? "empty" : "ready",
+        nodes,
+        status: nodes.length === 0 ? "empty" : "ready",
       });
     } catch (e) {
       const code = toErrorCode(e);
@@ -201,7 +233,7 @@ interface ReposState {
   load: () => Promise<void>;
   loadOverview: (id: string) => Promise<void>;
 }
-export const useReposStore = create<ReposState>((set) => ({
+export const useReposStore = create<ReposState>((set, get) => ({
   status: "idle",
   errorCode: null,
   repos: [],
@@ -214,8 +246,9 @@ export const useReposStore = create<ReposState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: RepoInfo[] }>("repos.list", {});
-      set({ repos: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const res = await client.invoke<unknown>("repos.list", {});
+      const repos = toItems<RepoDto>(res).map(mapRepo);
+      set({ repos, status: repos.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -229,8 +262,9 @@ export const useReposStore = create<ReposState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<RepoOverview>("repos.getOverview", { id });
-      set({ overview: res, status: "ready" });
+      const res = await client.invoke<RepoOverviewDto>("repos.getOverview", { id });
+      const known = get().repos.find((r) => r.id === id);
+      set({ overview: mapRepoOverview(res, known?.name ?? id), status: "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -258,8 +292,9 @@ export const useTransfersStore = create<TransfersState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: TransferJob[] }>("transfers.list", {});
-      set({ jobs: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const res = await client.invoke<unknown>("transfers.list", {});
+      const jobs = toItems<TransferDto>(res).map(mapTransfer);
+      set({ jobs, status: jobs.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -290,10 +325,11 @@ export const useSyncStore = create<SyncState>((set) => ({
     set({ status: "loading", errorCode: null });
     try {
       const s = await client.invoke<{ state: string }>("sync.getStatus", {});
-      const o = await client.invoke<{ items: OutboxEntry[] }>("sync.listOutbox", {});
+      const o = await client.invoke<unknown>("sync.listOutbox", {});
+      const outbox = toItems<OutboxDto>(o).map(mapOutbox);
       set({
         syncState: s.state,
-        outbox: o.items,
+        outbox,
         status: "ready",
       });
     } catch (e) {
@@ -321,8 +357,9 @@ export const useConflictsStore = create<ConflictsState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: ConflictInfo[] }>("sync.listConflicts", {});
-      set({ conflicts: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const res = await client.invoke<unknown>("sync.listConflicts", {});
+      const conflicts = toItems<ConflictDto>(res).map(mapConflict);
+      set({ conflicts, status: conflicts.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -352,12 +389,14 @@ export const useTagsStore = create<TagsState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const t = await client.invoke<{ items: TagInfo[] }>("tags.list", {});
-      const s = await client.invoke<{ items: TagInfo[] }>("tags.listSuggestions", {});
+      const t = await client.invoke<unknown>("tags.list", {});
+      const s = await client.invoke<unknown>("tags.listSuggestions", {});
+      const tags = toItems<TagDto>(t).map(mapTag);
+      const suggestions = toItems<TagDto>(s).map(mapTag);
       set({
-        tags: t.items,
-        suggestions: s.items,
-        status: t.items.length === 0 ? "empty" : "ready",
+        tags,
+        suggestions,
+        status: tags.length === 0 ? "empty" : "ready",
       });
     } catch (e) {
       const code = toErrorCode(e);
@@ -392,10 +431,11 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: SearchResult[] }>("search.query", {
+      const res = await client.invoke<unknown>("search.query", {
         text: get().query,
       });
-      set({ results: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const results = toItems<SearchHitDto>(res).map(mapSearchHit);
+      set({ results, status: results.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -459,8 +499,9 @@ export const useActivityStore = create<ActivityState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: ActivityEntry[] }>("activity.list", {});
-      set({ entries: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const res = await client.invoke<unknown>("activity.list", {});
+      const entries = toItems<ActivityDto>(res).map(mapActivity);
+      set({ entries, status: entries.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -480,6 +521,7 @@ interface EditorState {
   open: (nodeId: string, text: string, version: string) => void;
   edit: (text: string) => void;
   save: () => Promise<void>;
+  reload: () => Promise<void>;
 }
 export const useEditorStore = create<EditorState>((set, get) => ({
   status: "idle",
@@ -510,6 +552,22 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       set({ status: statusFromError(code), errorCode: code });
     }
   },
+  reload: async () => {
+    const client = getActiveClient();
+    const { nodeId } = get();
+    if (!client || !nodeId) {
+      set({ status: "offline", errorCode: "OFFLINE" });
+      return;
+    }
+    set({ status: "loading", errorCode: null });
+    try {
+      const res = await client.invoke<{ text: string; version: string }>("nodes.readText", { id: nodeId });
+      set({ text: res.text, version: res.version, dirty: false, status: "ready", errorCode: null });
+    } catch (e) {
+      const code = toErrorCode(e);
+      set({ status: statusFromError(code), errorCode: code });
+    }
+  },
 }));
 
 // --- organizer / inbox ---
@@ -534,8 +592,9 @@ export const useOrganizerStore = create<OrganizerState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: NodeItem[] }>("organize.listInbox", {});
-      set({ inbox: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const res = await client.invoke<unknown>("organize.listInbox", {});
+      const inbox = toItems<NodeDto>(res).map(mapNode);
+      set({ inbox, status: inbox.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -565,8 +624,9 @@ export const useSnapshotsStore = create<SnapshotsState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: SnapshotInfo[] }>("snapshots.list", {});
-      set({ snapshots: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const res = await client.invoke<unknown>("snapshots.list", {});
+      const snapshots = toItems<SnapshotDto>(res).map(mapSnapshot);
+      set({ snapshots, status: snapshots.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -623,8 +683,9 @@ export const useAccountsStore = create<AccountsState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: AccountInfo[] }>("accounts.list", {});
-      set({ accounts: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const res = await client.invoke<unknown>("accounts.list", {});
+      const accounts = toItems<AccountDto>(res).map(mapAccount);
+      set({ accounts, status: accounts.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -650,8 +711,9 @@ export const useProjectsStore = create<ProjectsState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: ProjectInfo[] }>("projects.list", {});
-      set({ projects: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const res = await client.invoke<unknown>("projects.list", {});
+      const projects = toItems<ProjectDto>(res).map(mapProject);
+      set({ projects, status: projects.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -677,11 +739,12 @@ export const useDuplicatesStore = create<DuplicatesState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: { hash: string; nodeIds: string[] }[] }>(
+      const res = await client.invoke<unknown>(
         "duplicates.list",
         {},
       );
-      set({ groups: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const groups = toItems<DuplicateGroupDto>(res).map(mapDuplicateGroup);
+      set({ groups, status: groups.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });
@@ -707,8 +770,9 @@ export const useTrashStore = create<TrashState>((set) => ({
     }
     set({ status: "loading", errorCode: null });
     try {
-      const res = await client.invoke<{ items: NodeItem[] }>("nodes.listTrash", {});
-      set({ items: res.items, status: res.items.length === 0 ? "empty" : "ready" });
+      const res = await client.invoke<unknown>("nodes.listTrash", {});
+      const items = toItems<NodeDto>(res).map(mapNode);
+      set({ items, status: items.length === 0 ? "empty" : "ready" });
     } catch (e) {
       const code = toErrorCode(e);
       set({ status: statusFromError(code), errorCode: code });

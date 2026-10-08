@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { getActiveClient } from "@core/bridge";
@@ -16,8 +16,15 @@ export function PreviewerView(): React.JSX.Element {
   const status = useTreeStore((s) => s.status);
   const errorCode = useTreeStore((s) => s.errorCode);
   const nodes = useTreeStore((s) => s.nodes);
+  const loadChildren = useTreeStore((s) => s.loadChildren);
   const [kind, setKind] = useState<PreviewKind>("text");
   const [markdown, setMarkdown] = useState("# hello");
+
+  useEffect(() => {
+    if (status === "idle") {
+      void loadChildren(null);
+    }
+  }, [status, loadChildren]);
 
   const selected = nodes[0] ?? null;
   const html = DOMPurify.sanitize(marked.parse(markdown) as string);
@@ -33,6 +40,9 @@ export function PreviewerView(): React.JSX.Element {
     <section className="previewer" aria-label={t("previewer.title")}>
       <h2>{t("previewer.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="previewer">
+        <button type="button" data-testid="previewer-refresh" data-action="previewer-refresh" onClick={() => { void loadChildren(null); }}>
+          {t("common.refresh")}
+        </button>
         <label htmlFor="previewer-kind">{t("previewer.title")}</label>
         <select
           id="previewer-kind"

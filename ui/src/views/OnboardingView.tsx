@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useAccountsStore } from "@core/stores";
 import { useT } from "@core/useT";
 import { getActiveClient } from "@core/bridge";
@@ -8,6 +9,13 @@ export function OnboardingView(): React.JSX.Element {
   const status = useAccountsStore((s) => s.status);
   const errorCode = useAccountsStore((s) => s.errorCode);
   const accounts = useAccountsStore((s) => s.accounts);
+  const load = useAccountsStore((s) => s.load);
+
+  useEffect(() => {
+    if (status === "idle") {
+      void load();
+    }
+  }, [status, load]);
 
   const connect = (): void => {
     const c = getActiveClient();
@@ -32,6 +40,16 @@ export function OnboardingView(): React.JSX.Element {
     <section className="onboarding" aria-label={t("onboarding.title")}>
       <h2>{t("onboarding.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="onboarding">
+        <button
+          type="button"
+          data-testid="onboarding-refresh"
+          data-action="onboarding-refresh"
+          onClick={() => {
+            void load();
+          }}
+        >
+          {t("common.refresh")}
+        </button>
         <p data-testid="onboarding-desc" data-action="onboarding-desc">
           {t("onboarding.description")}
         </p>

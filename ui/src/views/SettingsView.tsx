@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useAccountsStore, useAiStore, useSettingsStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -11,6 +12,17 @@ export function SettingsView(): React.JSX.Element {
   const setLanguage = useSettingsStore((s) => s.setLanguage);
   const aiStatus = useAiStore((s) => s.aiStatus);
   const accounts = useAccountsStore((s) => s.accounts);
+  const loadSettings = useSettingsStore((s) => s.load);
+  const loadAccounts = useAccountsStore((s) => s.load);
+  const loadAi = useAiStore((s) => s.load);
+
+  useEffect(() => {
+    if (status === "idle") {
+      void loadSettings();
+      void loadAccounts();
+      void loadAi();
+    }
+  }, [status, loadSettings, loadAccounts, loadAi]);
 
   const save = (): void => {
     const c = getActiveClient();
@@ -29,6 +41,18 @@ export function SettingsView(): React.JSX.Element {
     <section className="settings" aria-label={t("settings.title")}>
       <h2>{t("settings.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="settings">
+        <button
+          type="button"
+          data-testid="settings-refresh"
+          data-action="settings-refresh"
+          onClick={() => {
+            void loadSettings();
+            void loadAccounts();
+            void loadAi();
+          }}
+        >
+          {t("common.refresh")}
+        </button>
         <section aria-label={t("settings.general")}>
           <h3>{t("settings.general")}</h3>
           <label htmlFor="settings-lang">{t("common.language")}</label>

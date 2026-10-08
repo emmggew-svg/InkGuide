@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useTrashStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -8,11 +9,21 @@ export function TrashView(): React.JSX.Element {
   const status = useTrashStore((s) => s.status);
   const errorCode = useTrashStore((s) => s.errorCode);
   const items = useTrashStore((s) => s.items);
+  const load = useTrashStore((s) => s.load);
+
+  useEffect(() => {
+    if (status === "idle") {
+      void load();
+    }
+  }, [status, load]);
 
   return (
     <section className="trash" aria-label={t("trash.title")}>
       <h2>{t("trash.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="trash">
+        <button type="button" data-testid="trash-refresh" data-action="trash-refresh" onClick={() => { void load(); }}>
+          {t("common.refresh")}
+        </button>
         <button
           type="button"
           data-testid="trash-empty"

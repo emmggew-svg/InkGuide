@@ -103,14 +103,29 @@ internal sealed class BridgeReflection
             var fields = new List<ReflectedField>();
             foreach (PropertyInfo prop in props)
             {
-                fields.Add(new ReflectedField(ToCamelCase(prop.Name), MapType(prop.PropertyType)));
+                fields.Add(new ReflectedField(ToCamelCase(prop.Name), MapFieldType(prop)));
             }
+
 
             dtos.Add(new ReflectedDto(type.Name, fields));
         }
 
         ToolsLog.BridgeReflected(_logger, bridgeDllPath, dtos.Count + enums.Count);
         return new ReflectedContracts(dtos, enums, Loaded: true);
+    }
+
+    private static readonly NullabilityInfoContext Nullability = new();
+
+    internal static string MapFieldType(PropertyInfo property)
+    {
+        string baseType = MapType(property.PropertyType);
+        NullabilityInfo info = Nullability.Create(property);
+        if (info.ReadState == NullabilityState.Nullable && !property.PropertyType.IsValueType)
+        {
+            return baseType + " | null";
+        }
+
+        return baseType;
     }
 
     internal static string MapType(Type type)

@@ -15,8 +15,16 @@ export function EditorView(): React.JSX.Element {
   const dirty = useEditorStore((s) => s.dirty);
   const edit = useEditorStore((s) => s.edit);
   const save = useEditorStore((s) => s.save);
+  const reload = useEditorStore((s) => s.reload);
+  const hasFile = useEditorStore((s) => s.nodeId !== null);
   const ref = useRef<HTMLDivElement>(null);
   const viewRef = useRef<CodeMirrorView | null>(null);
+
+  useEffect(() => {
+    if (status === "idle" && hasFile) {
+      void reload();
+    }
+  }, [status, hasFile, reload]);
 
   useEffect(() => {
     const host = ref.current;
@@ -45,6 +53,9 @@ export function EditorView(): React.JSX.Element {
     <section className="editor" aria-label={t("editor.title")}>
       <h2>{t("editor.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="editor">
+        <button type="button" data-testid="editor-refresh" data-action="editor-refresh" onClick={() => { void reload(); }}>
+          {t("common.refresh")}
+        </button>
         {dirty ? (
           <p data-testid="editor-dirty" data-action="editor-dirty">
             {t("editor.dirty")}

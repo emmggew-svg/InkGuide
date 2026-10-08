@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useListingStore, useSelectionStore, useTreeStore, visibleListing } from "@core/stores";
 import { useT } from "@core/useT";
@@ -8,6 +9,7 @@ export function BrowserView(): React.JSX.Element {
   const status = useTreeStore((s) => s.status);
   const errorCode = useTreeStore((s) => s.errorCode);
   const nodes = useTreeStore((s) => s.nodes);
+  const loadChildren = useTreeStore((s) => s.loadChildren);
   const toggle = useTreeStore((s) => s.toggle);
   const expanded = useTreeStore((s) => s.expanded);
   const items = useListingStore((s) => s.items);
@@ -17,6 +19,12 @@ export function BrowserView(): React.JSX.Element {
   const setFilter = useListingStore((s) => s.setFilter);
   const sel = useSelectionStore((s) => s.ids);
   const toggleSel = useSelectionStore((s) => s.toggle);
+
+  useEffect(() => {
+    if (status === "idle") {
+      void loadChildren(null);
+    }
+  }, [status, loadChildren]);
 
   const shown = visibleListing(items.length > 0 ? items : nodes, filter, sortAsc);
 
@@ -43,6 +51,9 @@ export function BrowserView(): React.JSX.Element {
     <section className="browser" aria-label={t("browser.title")}>
       <h2>{t("browser.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="browser">
+        <button type="button" data-testid="browser-refresh" data-action="browser-refresh" onClick={() => { void loadChildren(null); }}>
+          {t("common.refresh")}
+        </button>
         <nav className="browser__breadcrumb" aria-label={t("browser.breadcrumb")}>
           <span data-testid="browser-breadcrumb" data-action="browser-breadcrumb">
             {t("browser.breadcrumb")}

@@ -155,14 +155,16 @@ public sealed class NodeRepository : INodeRepository
     {
         ArgumentNullException.ThrowIfNull(accountId);
         await using InkGuideDbContext db = await _factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
-        List<NodeEntity> nodes = await db.Nodes.AsNoTracking()
+        // SQLite cannot translate composite GroupBy over nullable keys: group in memory.
+        List<NodeEntity> candidates = await db.Nodes.AsNoTracking()
             .Where(n => n.AccountId == accountId && !n.Trashed && !n.IsFolder && n.Md5 != null && n.Size > 0)
-            .GroupBy(n => new { n.Md5, n.Size })
-            .Where(g => g.Count() > 1)
-            .SelectMany(g => g)
-            .OrderBy(n => n.Md5).ThenBy(n => n.PathText)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        return Result.Ok<IReadOnlyList<NodeEntity>>(nodes);
+        List<NodeEntity> dupes = candidates
+            .GroupBy(n => n.Md5 + ":" + n.Size, StringComparer.Ordinal)
+            .Where(g => g.Count() > 1)
+            .SelectMany(g => g.OrderBy(n => n.PathText, StringComparer.Ordinal))
+            .ToList();
+        return Result.Ok<IReadOnlyList<NodeEntity>>(dupes);
     }
 
     /// <inheritdoc />

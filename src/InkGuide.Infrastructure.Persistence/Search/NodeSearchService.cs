@@ -102,12 +102,12 @@ public sealed class NodeSearchService
             try
             {
                 string match = ToFtsMatch(needle);
-                List<SearchHit> hits = await db.Nodes.FromSqlRaw(
-                    "SELECT n.* FROM Nodes n JOIN node_fts ON node_fts.nodeId = n.Id WHERE n.AccountId = {0} AND node_fts MATCH {1} ORDER BY rank LIMIT {2};",
-                    accountId, match, Math.Clamp(limit <= 0 ? 50 : limit, 1, 200))
-                    .AsNoTracking()
-                    .Select(n => new SearchHit(n.Id, n.Name, n.PathText, n.IsFolder, null))
-                    .ToListAsync(cancellationToken).ConfigureAwait(false);
+                // SqlQueryRaw (not FromSqlRaw+Select): EF must not wrap the FTS
+                // query in a subquery — composition breaks the rank pseudo-column
+                // and silently degrades every content search to LIKE.
+                List<SearchHit> hits = await db.Database.SqlQueryRaw<SearchHit>(
+                    "SELECT n.Id AS NodeId, n.Name AS Name, n.PathText AS Path, n.IsFolder AS IsFolder, NULL AS Highlight FROM Nodes n JOIN node_fts ON node_fts.nodeId = n.Id WHERE n.AccountId = {0} AND node_fts MATCH {1} ORDER BY rank LIMIT {2};",
+                    accountId, match, Math.Clamp(limit <= 0 ? 50 : limit, 1, 200)).ToListAsync(cancellationToken).ConfigureAwait(false);
                 return Result.Ok<IReadOnlyList<SearchHit>>(hits);
             }
             catch (Microsoft.Data.Sqlite.SqliteException ex)

@@ -15,7 +15,14 @@ interface Props {
 // required states (loading/empty/error-by-code/offline/reauth/not-configured/
 // denied) are reachable and testable via data-testid hooks.
 export function ViewState({ status, errorCode, t, prefix, emptyText, children }: Props): ReactNode {
-  if (status === "loading" || status === "idle") {
+  if (status === "idle") {
+    return (
+      <p data-testid={`${prefix}-idle`} data-action={`${prefix}-idle`}>
+        {t("common.idle")}
+      </p>
+    );
+  }
+  if (status === "loading") {
     return (
       <p data-testid={`${prefix}-loading`} data-action={`${prefix}-loading`}>
         {t("common.loading")}

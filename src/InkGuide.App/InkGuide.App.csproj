@@ -22,7 +22,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="DiffPlex" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Extensions.Logging" />
     <PackageReference Include="Serilog.Sinks.File" />
@@ -30,6 +32,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\InkGuide.Bridge\InkGuide.Bridge.csproj" />
+    <ProjectReference Include="..\InkGuide.Domain\InkGuide.Domain.csproj" />
+    <ProjectReference Include="..\InkGuide.Application\InkGuide.Application.csproj" />
+    <ProjectReference Include="..\InkGuide.Analysis\InkGuide.Analysis.csproj" />
+    <ProjectReference Include="..\InkGuide.Infrastructure.Persistence\InkGuide.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\InkGuide.Infrastructure.Storage\InkGuide.Infrastructure.Storage.csproj" />
+    <ProjectReference Include="..\InkGuide.Infrastructure.Platform\InkGuide.Infrastructure.Platform.csproj" />
   </ItemGroup>
 
   <!-- Dev convenience: `dotnet run` shows the reference UI without a full

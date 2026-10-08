@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useSnapshotsStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -9,7 +9,14 @@ export function SnapshotsView(): React.JSX.Element {
   const status = useSnapshotsStore((s) => s.status);
   const errorCode = useSnapshotsStore((s) => s.errorCode);
   const snapshots = useSnapshotsStore((s) => s.snapshots);
+  const load = useSnapshotsStore((s) => s.load);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (status === "idle") {
+      void load();
+    }
+  }, [status, load]);
 
   const create = (): void => {
     const c = getActiveClient();
@@ -22,6 +29,9 @@ export function SnapshotsView(): React.JSX.Element {
     <section className="snapshots" aria-label={t("snapshots.title")}>
       <h2>{t("snapshots.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="snapshots">
+        <button type="button" data-testid="snapshots-refresh" data-action="snapshots-refresh" onClick={() => { void load(); }}>
+          {t("common.refresh")}
+        </button>
         <form
           onSubmit={(e) => {
             e.preventDefault();

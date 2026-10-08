@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useTransfersStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -8,6 +9,13 @@ export function TransfersView(): React.JSX.Element {
   const status = useTransfersStore((s) => s.status);
   const errorCode = useTransfersStore((s) => s.errorCode);
   const jobs = useTransfersStore((s) => s.jobs);
+  const load = useTransfersStore((s) => s.load);
+
+  useEffect(() => {
+    if (status === "idle") {
+      void load();
+    }
+  }, [status, load]);
 
   const cmd = (method: "transfers.pause" | "transfers.resume" | "transfers.cancel" | "transfers.retry", id?: string): void => {
     const c = getActiveClient();
@@ -20,6 +28,9 @@ export function TransfersView(): React.JSX.Element {
     <section className="transfers" aria-label={t("transfers.title")}>
       <h2>{t("transfers.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="transfers">
+        <button type="button" data-testid="transfers-refresh" data-action="transfers-refresh" onClick={() => { void load(); }}>
+          {t("common.refresh")}
+        </button>
         <button
           type="button"
           data-testid="transfers-upload"

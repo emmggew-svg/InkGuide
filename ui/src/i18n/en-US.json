@@ -2,6 +2,8 @@
   "app.title": "InkGuide",
   "app.nav": "Navigation",
   "common.loading": "Loading",
+  "common.idle": "Not loaded yet",
+  "common.refresh": "Refresh",
   "common.empty": "No items",
   "common.error": "Error",
   "common.offline": "Offline",

@@ -138,6 +138,12 @@ public sealed class BridgeDispatcher : IDisposable
         {
             throw;
         }
+        catch (ArgumentNullException ex)
+        {
+            // Null/missing input from the UI is a client error, never an
+            // internal failure (matches HandlerBase.Parse semantics).
+            return SerializeError(envelope.Id, new OperationError(ErrorCodes.InvalidParams, "Invalid params: " + (ex.ParamName ?? "value") + "."));
+        }
         catch (Exception ex)
         {
             return SerializeError(envelope.Id, new OperationError(ErrorCodes.Internal, "Unexpected failure: " + ex.GetType().Name + "."));

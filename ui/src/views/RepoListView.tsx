@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useReposStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -9,7 +9,14 @@ export function RepoListView(): React.JSX.Element {
   const status = useReposStore((s) => s.status);
   const errorCode = useReposStore((s) => s.errorCode);
   const repos = useReposStore((s) => s.repos);
+  const load = useReposStore((s) => s.load);
   const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (status === "idle") {
+      void load();
+    }
+  }, [status, load]);
 
   const create = (): void => {
     const c = getActiveClient();
@@ -22,6 +29,16 @@ export function RepoListView(): React.JSX.Element {
     <section className="repos" aria-label={t("repos.title")}>
       <h2>{t("repos.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="repos" emptyText={t("repos.empty")}>
+        <button
+          type="button"
+          data-testid="repos-refresh"
+          data-action="repos-refresh"
+          onClick={() => {
+            void load();
+          }}
+        >
+          {t("common.refresh")}
+        </button>
         <form
           className="repos__form"
           onSubmit={(e) => {

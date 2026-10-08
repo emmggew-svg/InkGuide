@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using InkGuide.App.Bridge;
+using InkGuide.App.Bridge.Backend;
 using InkGuide.App.Hosting;
 using InkGuide.App.WebView;
+using InkGuide.Bridge.Handlers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -86,20 +88,20 @@ public partial class App : System.Windows.Application
             builder.Services.AddSingleton<UiOverride>();
             builder.Services.AddSingleton<ResetService>();
             builder.Services.AddSingleton<DragDropHandler>();
-            builder.Services.AddSingleton<FallbackRouter>();
             builder.Services.AddSingleton(sp => new BridgeTransport(
                 sp.GetRequiredService<ILogger<BridgeTransport>>(),
                 sp.GetRequiredService<TimeProvider>(),
                 Dispatcher.CurrentDispatcher,
                 sp.GetRequiredService<DragDropHandler>()));
             builder.Services.AddSingleton<WebViewHostSetup>();
-            builder.Services.AddSingleton<BridgeModuleLoader>();
 
-            var loader = new BridgeModuleLoader(loggerFactory.CreateLogger<BridgeModuleLoader>());
-            loader.ConfigureBackend(builder.Services);
+            var backendHost = new BackendHost { HostVersion = Hosting.AppVersion.Current };
+            builder.Services.AddSingleton(backendHost);
+            builder.Services.AddBackendInkGuide(paths, cli, backendHost);
 
             _host = builder.Build();
             await _host.StartAsync().ConfigureAwait(true);
+            _ = await BackendStartup.EnsureAsync(_host.Services, CancellationToken.None).ConfigureAwait(true);
 
             UiResolution ui = _host.Services.GetRequiredService<UiOverride>().Resolve();
             if (ui.Folder is null)
@@ -108,22 +110,14 @@ public partial class App : System.Windows.Application
                 NativeDialog.ShowMissingUi("Status: " + ui.Status);
             }
 
-            var routers = new List<IBridgeRequestRouter>();
-            ExternalBridgeHandler? backend = loader.CreateHandler();
-            if (backend is not null)
-            {
-                routers.Add(backend);
-            }
-
-            routers.Add(_host.Services.GetRequiredService<FallbackRouter>());
-
             var window = new MainWindow(
                 _host.Services.GetRequiredService<ILogger<MainWindow>>(),
                 paths,
                 cli,
                 ui,
                 _host.Services.GetRequiredService<BridgeTransport>(),
-                routers,
+                _host.Services.GetRequiredService<BridgeDispatcher>(),
+                backendHost,
                 _host.Services.GetRequiredService<WindowStateStore>(),
                 _host.Services.GetRequiredService<WebViewHostSetup>(),
                 Quit,

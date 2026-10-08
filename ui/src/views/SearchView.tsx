@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useSearchStore } from "@core/stores";
 import { useT } from "@core/useT";
 import { ViewState } from "@views/ViewState";
@@ -10,6 +11,12 @@ export function SearchView(): React.JSX.Element {
   const results = useSearchStore((s) => s.results);
   const setQuery = useSearchStore((s) => s.setQuery);
   const run = useSearchStore((s) => s.run);
+
+  useEffect(() => {
+    if (status === "idle") {
+      void run();
+    }
+  }, [status, run]);
 
   return (
     <section className="search" aria-label={t("search.title")}>
@@ -36,6 +43,9 @@ export function SearchView(): React.JSX.Element {
       </form>
       <section aria-label={t("search.filters")}>
         <h3>{t("search.filters")}</h3>
+        <button type="button" data-testid="search-refresh" data-action="search-refresh" onClick={() => { void run(); }}>
+          {t("common.refresh")}
+        </button>
         <ViewState status={status} errorCode={errorCode} t={t} prefix="search">
           <ul className="search__list">
             {results.map((r) => (

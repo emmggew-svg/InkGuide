@@ -9,17 +9,23 @@ export function AboutDiagnosticsView(): React.JSX.Element {
   const t = useT();
   const status = useSettingsStore((s) => s.status);
   const errorCode = useSettingsStore((s) => s.errorCode);
+  const loadSettings = useSettingsStore((s) => s.load);
   const [health, setHealth] = useState("...");
 
+  useEffect(() => {
+    if (status === "idle") {
+      void loadSettings();
+    }
+  }, [status, loadSettings]);
   useEffect(() => {
     const c = getActiveClient();
     if (!c) {
       return;
     }
     void c
-      .invoke<{ ok: boolean; details: string }>("diagnostics.getHealth", {})
+      .invoke<{ state: string; checks: Record<string, string> }>("diagnostics.getHealth", {})
       .then((h) => {
-        setHealth(h.details);
+        setHealth(`${h.state}: ${Object.entries(h.checks ?? {}).map(([k, v]) => `${k}=${v}`).join(", ")}`);
       })
       .catch(() => {
         setHealth("error");
@@ -36,7 +42,10 @@ export function AboutDiagnosticsView(): React.JSX.Element {
   return (
     <section className="about" aria-label={t("about.title")}>
       <h2>{t("about.title")}</h2>
-      <ViewState status={status === "idle" ? "loading" : status} errorCode={errorCode} t={t} prefix="about">
+      <ViewState status={status} errorCode={errorCode} t={t} prefix="about">
+        <button type="button" data-testid="about-refresh" data-action="about-refresh" onClick={() => { void loadSettings(); }}>
+          {t("common.refresh")}
+        </button>
         <section aria-label={t("about.diagnostics")}>
           <h3>{t("about.diagnostics")}</h3>
           <p data-testid="about-health" data-action="about-health">

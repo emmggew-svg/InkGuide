@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useTagsStore, useTreeStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -9,9 +9,18 @@ export function InspectorView(): React.JSX.Element {
   const status = useTreeStore((s) => s.status);
   const errorCode = useTreeStore((s) => s.errorCode);
   const nodes = useTreeStore((s) => s.nodes);
+  const loadChildren = useTreeStore((s) => s.loadChildren);
   const tags = useTagsStore((s) => s.tags);
+  const loadTags = useTagsStore((s) => s.load);
   const [desc, setDesc] = useState("");
   const selected = nodes[0] ?? null;
+
+  useEffect(() => {
+    if (status === "idle") {
+      void loadChildren(null);
+      void loadTags();
+    }
+  }, [status, loadChildren, loadTags]);
 
   const save = (): void => {
     const c = getActiveClient();
@@ -36,6 +45,9 @@ export function InspectorView(): React.JSX.Element {
     <aside className="inspector" aria-label={t("inspector.title")}>
       <h2>{t("inspector.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="inspector">
+        <button type="button" data-testid="inspector-refresh" data-action="inspector-refresh" onClick={() => { void loadChildren(null); void loadTags(); }}>
+          {t("common.refresh")}
+        </button>
         <section className="inspector__section" aria-label={t("inspector.insight")}>
           <h3>{t("inspector.insight")}</h3>
           <p data-testid="inspector-node" data-action="inspector-node">

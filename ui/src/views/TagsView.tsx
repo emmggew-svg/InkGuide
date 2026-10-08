@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getActiveClient } from "@core/bridge";
 import { useTagsStore } from "@core/stores";
 import { useT } from "@core/useT";
@@ -10,7 +10,14 @@ export function TagsView(): React.JSX.Element {
   const errorCode = useTagsStore((s) => s.errorCode);
   const tags = useTagsStore((s) => s.tags);
   const suggestions = useTagsStore((s) => s.suggestions);
+  const load = useTagsStore((s) => s.load);
   const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (status === "idle") {
+      void load();
+    }
+  }, [status, load]);
 
   const create = (): void => {
     const c = getActiveClient();
@@ -35,6 +42,9 @@ export function TagsView(): React.JSX.Element {
     <section className="tags" aria-label={t("tags.title")}>
       <h2>{t("tags.title")}</h2>
       <ViewState status={status} errorCode={errorCode} t={t} prefix="tags">
+        <button type="button" data-testid="tags-refresh" data-action="tags-refresh" onClick={() => { void load(); }}>
+          {t("common.refresh")}
+        </button>
         <form
           onSubmit={(e) => {
             e.preventDefault();

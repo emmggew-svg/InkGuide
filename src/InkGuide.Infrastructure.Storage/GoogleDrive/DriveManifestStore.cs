@@ -40,7 +40,9 @@ public sealed class ManifestDocument
 {
     public int Schema { get; set; }
 
-    public Dictionary<string, ManifestEntry> Entries { get; } = new(StringComparer.Ordinal);
+    // Setter required: System.Text.Json does not populate get-only dictionaries
+    // on deserialize (proven by LocalFolder index round-trip, see DECISIONS D-016).
+    public Dictionary<string, ManifestEntry> Entries { get; set; } = new(StringComparer.Ordinal);
 }
 
 /// <summary>
@@ -135,17 +137,62 @@ public sealed class DriveManifestStore : IDisposable
 
         _pending.AddOrUpdate(
             key,
-            _ => new PendingWrite(repoFolderId, fileName, merged, CreateTimer(key)),
+            _ => new PendingWrite(repoFolderId, fileName, merged, new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal), CreateTimer(key)),
             (_, existing) =>
             {
                 foreach (KeyValuePair<string, ManifestEntry> kv in merged)
                 {
                     existing.Entries[kv.Key] = kv.Value;
+                    existing.Removals.Remove(kv.Key);
                 }
 
                 existing.Timer.Change(_options.Debounce, Timeout.InfiniteTimeSpan);
                 return existing;
             });
+        return Result.Ok();
+    }
+
+    /// <summary>
+    /// Queues debounced manifest entry removals (tombstones). At flush, a key is
+    /// deleted when the stored entry is not newer than the removal timestamp;
+    /// a concurrent newer write wins (last-writer-wins).
+    /// </summary>
+    public Result ScheduleRemove(string repoFolderId, string fileName, IReadOnlyList<string> keys)
+    {
+        ArgumentNullException.ThrowIfNull(repoFolderId);
+        ArgumentNullException.ThrowIfNull(fileName);
+        ArgumentNullException.ThrowIfNull(keys);
+        string key = repoFolderId + "/" + fileName;
+        DateTimeOffset now = _clock.GetUtcNow();
+        _pending.AddOrUpdate(
+            key,
+            _ => new PendingWrite(
+                repoFolderId,
+                fileName,
+                new Dictionary<string, ManifestEntry>(StringComparer.Ordinal),
+                new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal),
+                CreateTimer(key)),
+            (_, existing) =>
+            {
+                foreach (string remove in keys)
+                {
+                    existing.Entries.Remove(remove);
+                    existing.Removals[remove] = now;
+                }
+
+                existing.Timer.Change(_options.Debounce, Timeout.InfiniteTimeSpan);
+                return existing;
+            });
+
+        // Ensure the removal timestamps are recorded for the fresh entry too.
+        if (_pending.TryGetValue(key, out PendingWrite? pending))
+        {
+            foreach (string remove in keys)
+            {
+                pending.Removals[remove] = now;
+            }
+        }
+
         return Result.Ok();
     }
 
@@ -200,6 +247,14 @@ public sealed class DriveManifestStore : IDisposable
             if (!remote.Value.Entries.TryGetValue(kv.Key, out ManifestEntry? current) || kv.Value.UpdatedAtUtc >= current.UpdatedAtUtc)
             {
                 remote.Value.Entries[kv.Key] = kv.Value;
+            }
+        }
+
+        foreach (KeyValuePair<string, DateTimeOffset> removal in pending.Removals)
+        {
+            if (remote.Value.Entries.TryGetValue(removal.Key, out ManifestEntry? current) && current.UpdatedAtUtc <= removal.Value)
+            {
+                _ = remote.Value.Entries.Remove(removal.Key);
             }
         }
 
@@ -277,11 +332,12 @@ public sealed class DriveManifestStore : IDisposable
 
     private sealed class PendingWrite
     {
-        public PendingWrite(string repoFolderId, string fileName, Dictionary<string, ManifestEntry> entries, Timer timer)
+        public PendingWrite(string repoFolderId, string fileName, Dictionary<string, ManifestEntry> entries, Dictionary<string, DateTimeOffset> removals, Timer timer)
         {
             RepoFolderId = repoFolderId;
             FileName = fileName;
             Entries = entries;
+            Removals = removals;
             Timer = timer;
         }
 
@@ -290,6 +346,8 @@ public sealed class DriveManifestStore : IDisposable
         public string FileName { get; }
 
         public Dictionary<string, ManifestEntry> Entries { get; }
+
+        public Dictionary<string, DateTimeOffset> Removals { get; }
 
         public Timer Timer { get; }
     }
