@@ -86,6 +86,7 @@ public sealed partial class InkGuideBridgeBackend
             },
             "{}",
             _host.UiStatus);
+        AppLogMessages.HandshakeServed(_logger, AppIdentity.BridgeContractMajor, AppIdentity.BridgeContractMinor);
         return Result.Ok(response);
     }
 

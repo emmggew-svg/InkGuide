@@ -240,7 +240,7 @@ export class BridgeClient {
     try {
       const res = await this.invoke<{
         contract: { major: number; minor: number };
-      }>("app.hello", { contract: { major: CONTRACT_MAJOR, minor: CONTRACT_MINOR } }, {
+      }>("app.hello", { major: CONTRACT_MAJOR, minor: CONTRACT_MINOR }, {
         timeoutMs,
         signal: controller.signal,
       });

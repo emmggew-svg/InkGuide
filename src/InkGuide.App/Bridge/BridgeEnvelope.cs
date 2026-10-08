@@ -101,6 +101,33 @@ internal static class BridgeEnvelope
         return null;
     }
 
+    /// <summary>
+    /// Returns the dispatchable object JSON for a message. The UI posts a JSON
+    /// string (Sec 14.2), which WebView2 delivers as a JSON string literal —
+    /// unwrap one level so the dispatcher (which parses objects only) sees the
+    /// same envelope TryParseRequest validated. Anything else passes through.
+    /// </summary>
+    public static string UnwrapMessageJson(string json)
+    {
+        try
+        {
+            using JsonDocument doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind == JsonValueKind.String)
+            {
+                string? inner = doc.RootElement.GetString();
+                if (!string.IsNullOrEmpty(inner))
+                {
+                    return inner;
+                }
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        return json;
+    }
+
     private sealed class ErrorResponsePayload
     {
         public int V { get; set; }

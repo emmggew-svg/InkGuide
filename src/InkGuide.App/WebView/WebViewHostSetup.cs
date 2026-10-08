@@ -131,7 +131,13 @@ internal sealed class WebViewHostSetup
 
     private void MapVirtualHosts(CoreWebView2 core, Hosting.UiResolution ui)
     {
+        // SetVirtualHostNameToFolderMapping throws for missing folders. The
+        // ui-missing case is already reported via dialog + app.getUiStatus;
+        // ensure the directory so startup never crashes on top of that.
         string uiFolder = ui.Folder ?? AppPaths.UiBundledDir;
+        Directory.CreateDirectory(uiFolder);
+        Directory.CreateDirectory(_paths.ContentCacheDir);
+        Directory.CreateDirectory(_paths.PreviewCacheDir);
         core.SetVirtualHostNameToFolderMapping(
             AppIdentity.UiHost, uiFolder, CoreWebView2HostResourceAccessKind.Deny);
         core.SetVirtualHostNameToFolderMapping(

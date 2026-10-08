@@ -44,8 +44,12 @@
        publish. Copies ui/dist next to the exe only when it exists, so clean
        checkouts without a UI build still compile. Skipped during publish:
        build\publish.cmd assembles ui\dist itself, and extra in-target copies
-       disturb the publish file-resolution pipeline (MSB3094). -->
-  <Target Name="CopyUiBundleForDev" AfterTargets="Build" Condition="Exists('..\..\ui\dist\index.html') And '$(PublishDir)' == ''">
+       disturb the publish file-resolution pipeline (MSB3094).
+       NOTE: do NOT guard on '$(PublishDir)' == '' — the SDK always defaults
+       PublishDir (e.g. bin\...\publish\) even for plain builds, which made
+       this target silently never run (ui-missing at startup). IsPublishing
+       is only true under `dotnet publish`. -->
+  <Target Name="CopyUiBundleForDev" AfterTargets="Build" Condition="Exists('$(MSBuildProjectDirectory)\..\..\ui\dist\index.html') And '$(IsPublishing)' != 'true'">
     <ItemGroup>
       <UiBundleFiles Include="..\..\ui\dist\**\*" />
     </ItemGroup>

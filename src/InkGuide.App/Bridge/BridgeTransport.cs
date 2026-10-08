@@ -174,7 +174,7 @@ internal sealed class BridgeTransport : IDisposable
                 return;
             }
 
-            string dispatchJson = json;
+            string dispatchJson = BridgeEnvelope.UnwrapMessageJson(json);
             string[] dropped = ExtractNativePaths(e);
             if (dropped.Length > 0)
             {
